@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 from collections.abc import AsyncIterator
@@ -31,15 +32,15 @@ except ImportError:
 
 class FakeStreamingModel(Model):
     def __init__(self):
-        self.turn_outputs: list[list[TResponseOutputItem]] = []
+        self.turn_outputs: typing.List[typing.List[TResponseOutputItem]] = []
 
-    def set_next_output(self, output: list[TResponseOutputItem]):
+    def set_next_output(self, output: typing.List[TResponseOutputItem]):
         self.turn_outputs.append(output)
 
-    def add_multiple_turn_outputs(self, outputs: list[list[TResponseOutputItem]]):
+    def add_multiple_turn_outputs(self, outputs: typing.List[typing.List[TResponseOutputItem]]):
         self.turn_outputs.extend(outputs)
 
-    def get_next_output(self) -> list[TResponseOutputItem]:
+    def get_next_output(self) -> typing.List[TResponseOutputItem]:
         if not self.turn_outputs:
             return []
         return self.turn_outputs.pop(0)
@@ -47,11 +48,11 @@ class FakeStreamingModel(Model):
     async def get_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         *,
         previous_response_id: str | None,
@@ -62,16 +63,16 @@ class FakeStreamingModel(Model):
     async def stream_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         *,
         previous_response_id: str | None,
         prompt: Any | None,
-    ) -> AsyncIterator[TResponseStreamEvent]:
+    ) -> typing.AsyncIterator[TResponseStreamEvent]:
         output = self.get_next_output()
         for item in output:
             if (

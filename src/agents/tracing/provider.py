@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import os
 import threading
@@ -21,7 +22,7 @@ class SynchronousMultiTracingProcessor(TracingProcessor):
 
     def __init__(self):
         # Using a tuple to avoid race conditions when iterating over processors
-        self._processors: tuple[TracingProcessor, ...] = ()
+        self._processors: typing.Tuple[TracingProcessor, ...] = ()
         self._lock = threading.Lock()
 
     def add_tracing_processor(self, tracing_processor: TracingProcessor):
@@ -31,7 +32,7 @@ class SynchronousMultiTracingProcessor(TracingProcessor):
         with self._lock:
             self._processors += (tracing_processor,)
 
-    def set_processors(self, processors: list[TracingProcessor]):
+    def set_processors(self, processors: typing.List[TracingProcessor]):
         """
         Set the list of processors. This will replace the current list of processors.
         """
@@ -90,7 +91,7 @@ class TraceProvider(ABC):
         """Add a processor that will receive all traces and spans."""
 
     @abstractmethod
-    def set_processors(self, processors: list[TracingProcessor]) -> None:
+    def set_processors(self, processors: typing.List[TracingProcessor]) -> None:
         """Replace the list of processors with ``processors``."""
 
     @abstractmethod
@@ -127,7 +128,7 @@ class TraceProvider(ABC):
         name: str,
         trace_id: str | None = None,
         group_id: str | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: typing.Dict[str, Any] | None = None,
         disabled: bool = False,
     ) -> Trace:
         """Create a new trace."""
@@ -161,7 +162,7 @@ class DefaultTraceProvider(TraceProvider):
         """
         self._multi_processor.add_tracing_processor(processor)
 
-    def set_processors(self, processors: list[TracingProcessor]):
+    def set_processors(self, processors: typing.List[TracingProcessor]):
         """
         Set the list of processors. This will replace the current list of processors.
         """
@@ -206,7 +207,7 @@ class DefaultTraceProvider(TraceProvider):
         name: str,
         trace_id: str | None = None,
         group_id: str | None = None,
-        metadata: dict[str, Any] | None = None,
+        metadata: typing.Dict[str, Any] | None = None,
         disabled: bool = False,
     ) -> Trace:
         """

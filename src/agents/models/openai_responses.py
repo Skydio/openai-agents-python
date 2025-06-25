@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 from collections.abc import AsyncIterator
@@ -68,11 +69,11 @@ class OpenAIResponsesModel(Model):
     async def get_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
         prompt: ResponsePromptParam | None = None,
@@ -137,15 +138,15 @@ class OpenAIResponsesModel(Model):
     async def stream_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
         prompt: ResponsePromptParam | None = None,
-    ) -> AsyncIterator[ResponseStreamEvent]:
+    ) -> typing.AsyncIterator[ResponseStreamEvent]:
         """
         Yields a partial message as it is generated, as well as the usage information.
         """
@@ -190,11 +191,11 @@ class OpenAIResponsesModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         previous_response_id: str | None,
         stream: Literal[True],
         prompt: ResponsePromptParam | None = None,
@@ -204,11 +205,11 @@ class OpenAIResponsesModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         previous_response_id: str | None,
         stream: Literal[False],
         prompt: ResponsePromptParam | None = None,
@@ -217,11 +218,11 @@ class OpenAIResponsesModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         previous_response_id: str | None,
         stream: Literal[True] | Literal[False] = False,
         prompt: ResponsePromptParam | None = None,
@@ -240,7 +241,7 @@ class OpenAIResponsesModel(Model):
         converted_tools = Converter.convert_tools(tools, handoffs)
         response_format = Converter.get_response_format(output_schema)
 
-        include: list[ResponseIncludable] = converted_tools.includes
+        include: typing.List[ResponseIncludable] = converted_tools.includes
         if model_settings.response_include is not None:
             include = list({*include, *model_settings.response_include})
 
@@ -290,8 +291,8 @@ class OpenAIResponsesModel(Model):
 
 @dataclass
 class ConvertedTools:
-    tools: list[ToolParam]
-    includes: list[ResponseIncludable]
+    tools: typing.List[ToolParam]
+    includes: typing.List[ResponseIncludable]
 
 
 class Converter:
@@ -356,11 +357,11 @@ class Converter:
     @classmethod
     def convert_tools(
         cls,
-        tools: list[Tool],
-        handoffs: list[Handoff[Any]],
+        tools: typing.List[Tool],
+        handoffs: typing.List[Handoff[Any]],
     ) -> ConvertedTools:
-        converted_tools: list[ToolParam] = []
-        includes: list[ResponseIncludable] = []
+        converted_tools: typing.List[ToolParam] = []
+        includes: typing.List[ResponseIncludable] = []
 
         computer_tools = [tool for tool in tools if isinstance(tool, ComputerTool)]
         if len(computer_tools) > 1:
@@ -378,7 +379,7 @@ class Converter:
         return ConvertedTools(tools=converted_tools, includes=includes)
 
     @classmethod
-    def _convert_tool(cls, tool: Tool) -> tuple[ToolParam, ResponseIncludable | None]:
+    def _convert_tool(cls, tool: Tool) -> typing.Tuple[ToolParam, ResponseIncludable | None]:
         """Returns converted tool and includes"""
 
         if isinstance(tool, FunctionTool):

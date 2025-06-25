@@ -63,7 +63,7 @@ class ModelSettings:
     """Whether to include usage chunk.
     Defaults to True if not provided."""
 
-    response_include: list[ResponseIncludable] | None = None
+    response_include: typing.List[ResponseIncludable] | None = None
     """Additional output data to include in the model response.
     [include parameter](https://platform.openai.com/docs/api-reference/responses/create#responses-create-include)"""
 
@@ -79,7 +79,7 @@ class ModelSettings:
     """Additional headers to provide with the request.
     Defaults to None if not provided."""
 
-    extra_args: dict[str, Any] | None = None
+    extra_args: typing.Dict[str, Any] | None = None
     """Arbitrary keyword arguments to pass to the model API call.
     These will be passed directly to the underlying model provider's API.
     Use with caution as not all models support all parameters."""

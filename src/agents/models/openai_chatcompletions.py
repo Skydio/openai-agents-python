@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 import time
@@ -47,11 +48,11 @@ class OpenAIChatCompletionsModel(Model):
     async def get_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
         prompt: ResponsePromptParam | None = None,
@@ -133,15 +134,15 @@ class OpenAIChatCompletionsModel(Model):
     async def stream_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
         prompt: ResponsePromptParam | None = None,
-    ) -> AsyncIterator[TResponseStreamEvent]:
+    ) -> typing.AsyncIterator[TResponseStreamEvent]:
         """
         Yields a partial message as it is generated, as well as the usage information.
         """
@@ -183,26 +184,26 @@ class OpenAIChatCompletionsModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[True],
         prompt: ResponsePromptParam | None = None,
-    ) -> tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
+    ) -> typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
 
     @overload
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[False],
@@ -212,16 +213,16 @@ class OpenAIChatCompletionsModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: bool = False,
         prompt: ResponsePromptParam | None = None,
-    ) -> ChatCompletion | tuple[Response, AsyncStream[ChatCompletionChunk]]:
+    ) -> ChatCompletion | typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]:
         converted_messages = Converter.items_to_messages(input)
 
         if system_instructions:

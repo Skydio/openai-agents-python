@@ -1,3 +1,5 @@
+import typing
+
 from dataclasses import dataclass, field, fields
 from typing import Any
 
@@ -23,7 +25,7 @@ class ToolContext(RunContextWrapper[TContext]):
         Create a ToolContext from a RunContextWrapper.
         """
         # Grab the names of the RunContextWrapper's init=True fields
-        base_values: dict[str, Any] = {
+        base_values: typing.Dict[str, Any] = {
             f.name: getattr(context, f.name) for f in fields(RunContextWrapper) if f.init
         }
         return cls(tool_call_id=tool_call_id, **base_values)

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import inspect
 from dataclasses import dataclass
@@ -28,7 +29,7 @@ class Prompt(TypedDict):
     version: NotRequired[str]
     """Optional version of the prompt."""
 
-    variables: NotRequired[dict[str, ResponsesPromptVariables]]
+    variables: NotRequired[typing.Dict[str, ResponsesPromptVariables]]
     """Optional variables to substitute into the prompt."""
 
 

@@ -212,7 +212,7 @@ class Runner:
     def run_sync(
         cls,
         starting_agent: Agent[TContext],
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         *,
         context: TContext | None = None,
         max_turns: int = DEFAULT_MAX_TURNS,
@@ -264,7 +264,7 @@ class Runner:
     def run_streamed(
         cls,
         starting_agent: Agent[TContext],
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         context: TContext | None = None,
         max_turns: int = DEFAULT_MAX_TURNS,
         hooks: RunHooks[TContext] | None = None,
@@ -318,7 +318,7 @@ class AgentRunner:
     async def run(
         self,
         starting_agent: Agent[TContext],
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         **kwargs: Unpack[RunOptions[TContext]],
     ) -> RunResult:
         context = kwargs.get("context")
@@ -481,7 +481,7 @@ class AgentRunner:
     def run_sync(
         self,
         starting_agent: Agent[TContext],
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         **kwargs: Unpack[RunOptions[TContext]],
     ) -> RunResult:
         context = kwargs.get("context")
@@ -504,7 +504,7 @@ class AgentRunner:
     def run_streamed(
         self,
         starting_agent: Agent[TContext],
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         **kwargs: Unpack[RunOptions[TContext]],
     ) -> RunResultStreaming:
         context = kwargs.get("context")
@@ -1099,7 +1099,7 @@ class AgentRunner:
     @classmethod
     async def _get_handoffs(
         cls, agent: Agent[Any], context_wrapper: RunContextWrapper[Any]
-    ) -> list[Handoff]:
+    ) -> typing.List[Handoff]:
         handoffs = []
         for handoff_item in agent.handoffs:
             if isinstance(handoff_item, Handoff):
@@ -1117,7 +1117,7 @@ class AgentRunner:
             return bool(res)
 
         results = await asyncio.gather(*(_check_handoff_enabled(h) for h in handoffs))
-        enabled: list[Handoff] = [h for h, ok in zip(handoffs, results) if ok]
+        enabled: typing.List[Handoff] = [h for h, ok in zip(handoffs, results) if ok]
         return enabled
 
     @classmethod

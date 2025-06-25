@@ -1,3 +1,5 @@
+import typing
+
 import litellm
 import pytest
 from litellm.types.utils import Choices, Message, ModelResponse, Usage
@@ -17,7 +19,7 @@ async def test_litellm_kwargs_forwarded(monkeypatch):
     """
     Test that kwargs from ModelSettings are forwarded to litellm.acompletion.
     """
-    captured: dict[str, object] = {}
+    captured: typing.Dict[str, object] = {}
 
     async def fake_acompletion(model, messages=None, **kwargs):
         captured.update(kwargs)
@@ -65,7 +67,7 @@ async def test_openai_chatcompletions_kwargs_forwarded(monkeypatch):
     """
     Test that kwargs from ModelSettings are forwarded to OpenAI chat completions API.
     """
-    captured: dict[str, object] = {}
+    captured: typing.Dict[str, object] = {}
 
     class MockChatCompletions:
         async def create(self, **kwargs):
@@ -130,7 +132,7 @@ async def test_empty_kwargs_handling(monkeypatch):
     """
     Test that empty or None kwargs are handled gracefully.
     """
-    captured: dict[str, object] = {}
+    captured: typing.Dict[str, object] = {}
 
     async def fake_acompletion(model, messages=None, **kwargs):
         captured.update(kwargs)

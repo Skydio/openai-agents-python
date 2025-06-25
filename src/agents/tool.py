@@ -69,7 +69,7 @@ class FunctionTool:
     params_json_schema: typing.Dict[str, Any]
     """The JSON schema for the tool's parameters."""
 
-    on_invoke_tool: Callable[[ToolContext[Any], str], Awaitable[Any]]
+    on_invoke_tool: Callable[[ToolContext[Any], str], typing.Awaitable[Any]]
     """A function that invokes the tool with the given context and parameters. The params passed
     are:
     1. The tool run context.

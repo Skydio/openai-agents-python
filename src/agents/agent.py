@@ -257,12 +257,12 @@ class Agent(Generic[TContext]):
         """Get the prompt for the agent."""
         return await PromptUtil.to_model_input(self.prompt, run_context, self)
 
-    async def get_mcp_tools(self) -> list[Tool]:
+    async def get_mcp_tools(self) -> typing.List[Tool]:
         """Fetches the available tools from the MCP servers."""
         convert_schemas_to_strict = self.mcp_config.get("convert_schemas_to_strict", False)
         return await MCPUtil.get_all_function_tools(self.mcp_servers, convert_schemas_to_strict)
 
-    async def get_all_tools(self, run_context: RunContextWrapper[Any]) -> typing.list[Tool]:
+    async def get_all_tools(self, run_context: RunContextWrapper[Any]) -> typing.List[Tool]:
         """All agent tools, including MCP tools and function tools."""
         mcp_tools = await self.get_mcp_tools()
 
