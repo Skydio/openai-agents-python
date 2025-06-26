@@ -1,10 +1,12 @@
 from __future__ import annotations
+import typing
 
 import dataclasses
 from dataclasses import dataclass, fields, replace
 from typing import Any, Literal
 
 from openai._types import Body, Headers, Query
+from openai.types.responses import ResponseIncludable
 from openai.types.shared import Reasoning
 from pydantic import BaseModel
 
@@ -50,7 +52,7 @@ class ModelSettings:
     [reasoning models](https://platform.openai.com/docs/guides/reasoning).
     """
 
-    metadata: dict[str, str] | None = None
+    metadata: typing.Dict[str, str] | None = None
     """Metadata to include with the model response call."""
 
     store: bool | None = None
@@ -60,6 +62,10 @@ class ModelSettings:
     include_usage: bool | None = None
     """Whether to include usage chunk.
     Defaults to True if not provided."""
+
+    response_include: typing.List[ResponseIncludable] | None = None
+    """Additional output data to include in the model response.
+    [include parameter](https://platform.openai.com/docs/api-reference/responses/create#responses-create-include)"""
 
     extra_query: Query | None = None
     """Additional query fields to provide with the request.
@@ -73,6 +79,11 @@ class ModelSettings:
     """Additional headers to provide with the request.
     Defaults to None if not provided."""
 
+    extra_args: typing.Dict[str, Any] | None = None
+    """Arbitrary keyword arguments to pass to the model API call.
+    These will be passed directly to the underlying model provider's API.
+    Use with caution as not all models support all parameters."""
+
     def resolve(self, override: ModelSettings | None) -> ModelSettings:
         """Produce a new ModelSettings by overlaying any non-None values from the
         override on top of this instance."""
@@ -84,12 +95,22 @@ class ModelSettings:
             for field in fields(self)
             if getattr(override, field.name) is not None
         }
+
+        # Handle extra_args merging specially - merge dictionaries instead of replacing
+        if self.extra_args is not None or override.extra_args is not None:
+            merged_args = {}
+            if self.extra_args:
+                merged_args.update(self.extra_args)
+            if override.extra_args:
+                merged_args.update(override.extra_args)
+            changes["extra_args"] = merged_args if merged_args else None
+
         return replace(self, **changes)
 
-    def to_json_dict(self) -> dict[str, Any]:
+    def to_json_dict(self) -> typing.Dict[str, Any]:
         dataclass_dict = dataclasses.asdict(self)
 
-        json_dict: dict[str, Any] = {}
+        json_dict: typing.Dict[str, Any] = {}
 
         for field_name, value in dataclass_dict.items():
             if isinstance(value, BaseModel):

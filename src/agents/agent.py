@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import asyncio
 import dataclasses
@@ -7,6 +8,7 @@ from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast
 
+from openai.types.responses.response_prompt_param import ResponsePromptParam
 from typing_extensions import NotRequired, TypeAlias, TypedDict
 
 from .agent_output import AgentOutputSchemaBase
@@ -17,6 +19,7 @@ from .logger import logger
 from .mcp import MCPUtil
 from .model_settings import ModelSettings
 from .models.interface import Model
+from .prompts import DynamicPromptFunction, Prompt, PromptUtil
 from .run_context import RunContextWrapper, TContext
 from .tool import FunctionTool, FunctionToolResult, Tool, function_tool
 from .util import _transforms
@@ -42,7 +45,7 @@ class ToolsToFinalOutputResult:
 
 
 ToolsToFinalOutputFunction: TypeAlias = Callable[
-    [RunContextWrapper[TContext], list[FunctionToolResult]],
+    [RunContextWrapper[TContext], typing.List[FunctionToolResult]],
     MaybeAwaitable[ToolsToFinalOutputResult],
 ]
 """A function that takes a run context and a list of tool results, and returns a
@@ -51,7 +54,7 @@ ToolsToFinalOutputFunction: TypeAlias = Callable[
 
 
 class StopAtTools(TypedDict):
-    stop_at_tool_names: list[str]
+    stop_at_tool_names: typing.List[str]
     """A list of tool names, any of which will stop the agent from running further."""
 
 
@@ -95,12 +98,18 @@ class Agent(Generic[TContext]):
     return a string.
     """
 
+    prompt: Prompt | DynamicPromptFunction | None = None
+    """A prompt object (or a function that returns a Prompt). Prompts allow you to dynamically
+    configure the instructions, tools and other config for an agent outside of your code. Only
+    usable with OpenAI models, using the Responses API.
+    """
+
     handoff_description: str | None = None
     """A description of the agent. This is used when the agent is used as a handoff, so that an
     LLM knows what it does and when to invoke it.
     """
 
-    handoffs: list[Agent[Any] | Handoff[TContext]] = field(default_factory=list)
+    handoffs: typing.List[Agent[Any] | Handoff[TContext]] = field(default_factory=list)
     """Handoffs are sub-agents that the agent can delegate to. You can provide a list of handoffs,
     and the agent can choose to delegate to them if relevant. Allows for separation of concerns and
     modularity.
@@ -117,10 +126,10 @@ class Agent(Generic[TContext]):
     """Configures model-specific tuning parameters (e.g. temperature, top_p).
     """
 
-    tools: list[Tool] = field(default_factory=list)
+    tools: typing.List[Tool] = field(default_factory=list)
     """A list of tools that the agent can use."""
 
-    mcp_servers: list[MCPServer] = field(default_factory=list)
+    mcp_servers: typing.List[MCPServer] = field(default_factory=list)
     """A list of [Model Context Protocol](https://modelcontextprotocol.io/) servers that
     the agent can use. Every time the agent runs, it will include tools from these servers in the
     list of available tools.
@@ -133,17 +142,17 @@ class Agent(Generic[TContext]):
     mcp_config: MCPConfig = field(default_factory=lambda: MCPConfig())
     """Configuration for MCP servers."""
 
-    input_guardrails: list[InputGuardrail[TContext]] = field(default_factory=list)
+    input_guardrails: typing.List[InputGuardrail[TContext]] = field(default_factory=list)
     """A list of checks that run in parallel to the agent's execution, before generating a
     response. Runs only if the agent is the first agent in the chain.
     """
 
-    output_guardrails: list[OutputGuardrail[TContext]] = field(default_factory=list)
+    output_guardrails: typing.List[OutputGuardrail[TContext]] = field(default_factory=list)
     """A list of checks that run on the final output of the agent, after generating a response.
     Runs only if the agent produces a final output.
     """
 
-    output_type: type[Any] | AgentOutputSchemaBase | None = None
+    output_type: typing.Type[Any] | AgentOutputSchemaBase | None = None
     """The type of the output object. If not provided, the output will be `str`. In most cases,
     you should pass a regular Python type (e.g. a dataclass, Pydantic model, TypedDict, etc).
     You can customize this in two ways:
@@ -191,7 +200,7 @@ class Agent(Generic[TContext]):
         self,
         tool_name: str | None,
         tool_description: str | None,
-        custom_output_extractor: Callable[[RunResult], Awaitable[str]] | None = None,
+        custom_output_extractor: Callable[[RunResult], typing.Awaitable[str]] | None = None,
     ) -> Tool:
         """Transform this agent into a tool, callable by other agents.
 
@@ -234,7 +243,7 @@ class Agent(Generic[TContext]):
             return self.instructions
         elif callable(self.instructions):
             if inspect.iscoroutinefunction(self.instructions):
-                return await cast(Awaitable[str], self.instructions(run_context, self))
+                return await cast(typing.Awaitable[str], self.instructions(run_context, self))
             else:
                 return cast(str, self.instructions(run_context, self))
         elif self.instructions is not None:
@@ -242,12 +251,18 @@ class Agent(Generic[TContext]):
 
         return None
 
-    async def get_mcp_tools(self) -> list[Tool]:
+    async def get_prompt(
+        self, run_context: RunContextWrapper[TContext]
+    ) -> ResponsePromptParam | None:
+        """Get the prompt for the agent."""
+        return await PromptUtil.to_model_input(self.prompt, run_context, self)
+
+    async def get_mcp_tools(self) -> typing.List[Tool]:
         """Fetches the available tools from the MCP servers."""
         convert_schemas_to_strict = self.mcp_config.get("convert_schemas_to_strict", False)
         return await MCPUtil.get_all_function_tools(self.mcp_servers, convert_schemas_to_strict)
 
-    async def get_all_tools(self, run_context: RunContextWrapper[Any]) -> list[Tool]:
+    async def get_all_tools(self, run_context: RunContextWrapper[Any]) -> typing.List[Tool]:
         """All agent tools, including MCP tools and function tools."""
         mcp_tools = await self.get_mcp_tools()
 
@@ -264,5 +279,5 @@ class Agent(Generic[TContext]):
             return bool(res)
 
         results = await asyncio.gather(*(_check_tool_enabled(t) for t in self.tools))
-        enabled: list[Tool] = [t for t, ok in zip(self.tools, results) if ok]
+        enabled: typing.List[Tool] = [t for t, ok in zip(self.tools, results) if ok]
         return [*mcp_tools, *enabled]

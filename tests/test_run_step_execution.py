@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 from typing import Any
@@ -14,7 +15,6 @@ from agents import (
     RunContextWrapper,
     RunHooks,
     RunItem,
-    Runner,
     ToolCallItem,
     ToolCallOutputItem,
     TResponseInputItem,
@@ -27,6 +27,7 @@ from agents._run_impl import (
     RunImpl,
     SingleStepResult,
 )
+from agents.run import AgentRunner
 from agents.tool import function_tool
 from agents.tool_context import ToolContext
 
@@ -318,14 +319,14 @@ async def get_execute_result(
     agent: Agent[Any],
     response: ModelResponse,
     *,
-    original_input: str | list[TResponseInputItem] | None = None,
-    generated_items: list[RunItem] | None = None,
+    original_input: str | typing.List[TResponseInputItem] | None = None,
+    generated_items: typing.List[RunItem] | None = None,
     hooks: RunHooks[Any] | None = None,
     context_wrapper: RunContextWrapper[Any] | None = None,
     run_config: RunConfig | None = None,
 ) -> SingleStepResult:
-    output_schema = Runner._get_output_schema(agent)
-    handoffs = Runner._get_handoffs(agent)
+    output_schema = AgentRunner._get_output_schema(agent)
+    handoffs = await AgentRunner._get_handoffs(agent, context_wrapper or RunContextWrapper(None))
 
     processed_response = RunImpl.process_model_response(
         agent=agent,

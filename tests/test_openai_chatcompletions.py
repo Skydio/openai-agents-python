@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 from collections.abc import AsyncIterator
 from typing import Any
@@ -77,6 +78,7 @@ async def test_get_response_with_text_message(monkeypatch) -> None:
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
+        prompt=None,
     )
     # Should have produced exactly one output message with one text part
     assert isinstance(resp, ModelResponse)
@@ -128,6 +130,7 @@ async def test_get_response_with_refusal(monkeypatch) -> None:
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
+        prompt=None,
     )
     assert len(resp.output) == 1
     assert isinstance(resp.output[0], ResponseOutputMessage)
@@ -180,6 +183,7 @@ async def test_get_response_with_tool_call(monkeypatch) -> None:
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
+        prompt=None,
     )
     # Expect a message item followed by a function tool call item.
     assert len(resp.output) == 2
@@ -221,6 +225,7 @@ async def test_get_response_with_no_message(monkeypatch) -> None:
         handoffs=[],
         tracing=ModelTracing.DISABLED,
         previous_response_id=None,
+        prompt=None,
     )
     assert resp.output == []
 
@@ -237,7 +242,7 @@ async def test_fetch_response_non_stream(monkeypatch) -> None:
     # Dummy completions to record kwargs
     class DummyCompletions:
         def __init__(self) -> None:
-            self.kwargs: dict[str, Any] = {}
+            self.kwargs: typing.Dict[str, Any] = {}
 
         async def create(self, **kwargs: Any) -> Any:
             self.kwargs = kwargs
@@ -297,13 +302,13 @@ async def test_fetch_response_stream(monkeypatch) -> None:
     should include `stream_options` to request usage-delimited chunks.
     """
 
-    async def event_stream() -> AsyncIterator[ChatCompletionChunk]:
+    async def event_stream() -> typing.AsyncIterator[ChatCompletionChunk]:
         if False:  # pragma: no cover
             yield  # pragma: no cover
 
     class DummyCompletions:
         def __init__(self) -> None:
-            self.kwargs: dict[str, Any] = {}
+            self.kwargs: typing.Dict[str, Any] = {}
 
         async def create(self, **kwargs: Any) -> Any:
             self.kwargs = kwargs

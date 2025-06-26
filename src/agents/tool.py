@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import inspect
 import json
@@ -65,10 +66,10 @@ class FunctionTool:
     description: str
     """A description of the tool, as shown to the LLM."""
 
-    params_json_schema: dict[str, Any]
+    params_json_schema: typing.Dict[str, Any]
     """The JSON schema for the tool's parameters."""
 
-    on_invoke_tool: Callable[[ToolContext[Any], str], Awaitable[Any]]
+    on_invoke_tool: Callable[[ToolContext[Any], str], typing.Awaitable[Any]]
     """A function that invokes the tool with the given context and parameters. The params passed
     are:
     1. The tool run context.
@@ -95,7 +96,7 @@ class FileSearchTool:
     OpenAI models, using the Responses API.
     """
 
-    vector_store_ids: list[str]
+    vector_store_ids: typing.List[str]
     """The IDs of the vector stores to search."""
 
     max_num_results: int | None = None
@@ -352,7 +353,7 @@ def function_tool(
 
         async def _on_invoke_tool_impl(ctx: ToolContext[Any], input: str) -> Any:
             try:
-                json_data: dict[str, Any] = json.loads(input) if input else {}
+                json_data: typing.Dict[str, Any] = json.loads(input) if input else {}
             except Exception as e:
                 if _debug.DONT_LOG_TOOL_DATA:
                     logger.debug(f"Invalid JSON input for tool {schema.name}")

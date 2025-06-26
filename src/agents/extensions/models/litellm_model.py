@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 import time
@@ -64,13 +65,14 @@ class LitellmModel(Model):
     async def get_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
+        prompt: Any | None = None,
     ) -> ModelResponse:
         with generation_span(
             model=str(self.model),
@@ -88,6 +90,7 @@ class LitellmModel(Model):
                 span_generation,
                 tracing,
                 stream=False,
+                prompt=prompt,
             )
 
             assert isinstance(response.choices[0], litellm.types.utils.Choices)
@@ -147,15 +150,15 @@ class LitellmModel(Model):
     async def stream_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
-        *,
         previous_response_id: str | None,
-    ) -> AsyncIterator[TResponseStreamEvent]:
+        prompt: Any | None = None,
+    ) -> typing.AsyncIterator[TResponseStreamEvent]:
         with generation_span(
             model=str(self.model),
             model_config=model_settings.to_json_dict()
@@ -172,6 +175,7 @@ class LitellmModel(Model):
                 span_generation,
                 tracing,
                 stream=True,
+                prompt=prompt,
             )
 
             final_response: Response | None = None
@@ -194,42 +198,45 @@ class LitellmModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[True],
-    ) -> tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
+        prompt: Any | None = None,
+    ) -> typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
 
     @overload
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[False],
+        prompt: Any | None = None,
     ) -> litellm.types.utils.ModelResponse: ...
 
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: bool = False,
-    ) -> litellm.types.utils.ModelResponse | tuple[Response, AsyncStream[ChatCompletionChunk]]:
+        prompt: Any | None = None,
+    ) -> litellm.types.utils.ModelResponse | typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]:
         converted_messages = Converter.items_to_messages(input)
 
         if system_instructions:
@@ -283,6 +290,10 @@ class LitellmModel(Model):
             extra_kwargs["metadata"] = model_settings.metadata
         if model_settings.extra_body and isinstance(model_settings.extra_body, dict):
             extra_kwargs.update(model_settings.extra_body)
+
+        # Add kwargs from model_settings.extra_args, filtering out None values
+        if model_settings.extra_args:
+            extra_kwargs.update(model_settings.extra_args)
 
         ret = await litellm.acompletion(
             model=self.model,
@@ -362,8 +373,8 @@ class LitellmConverter:
     @classmethod
     def convert_annotations_to_openai(
         cls, message: litellm.types.utils.Message
-    ) -> list[Annotation] | None:
-        annotations: list[litellm.types.llms.openai.ChatCompletionAnnotation] | None = message.get(
+    ) -> typing.List[Annotation] | None:
+        annotations: typing.List[litellm.types.llms.openai.ChatCompletionAnnotation] | None = message.get(
             "annotations", None
         )
         if not annotations:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import typing
 
 import json
 import time
@@ -9,6 +10,7 @@ from openai import NOT_GIVEN, AsyncOpenAI, AsyncStream
 from openai.types import ChatModel
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.responses import Response
+from openai.types.responses.response_prompt_param import ResponsePromptParam
 from openai.types.responses.response_usage import InputTokensDetails, OutputTokensDetails
 
 from .. import _debug
@@ -46,13 +48,14 @@ class OpenAIChatCompletionsModel(Model):
     async def get_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
         previous_response_id: str | None,
+        prompt: ResponsePromptParam | None = None,
     ) -> ModelResponse:
         with generation_span(
             model=str(self.model),
@@ -69,6 +72,7 @@ class OpenAIChatCompletionsModel(Model):
                 span_generation,
                 tracing,
                 stream=False,
+                prompt=prompt,
             )
 
             first_choice = response.choices[0]
@@ -130,15 +134,15 @@ class OpenAIChatCompletionsModel(Model):
     async def stream_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         tracing: ModelTracing,
-        *,
         previous_response_id: str | None,
-    ) -> AsyncIterator[TResponseStreamEvent]:
+        prompt: ResponsePromptParam | None = None,
+    ) -> typing.AsyncIterator[TResponseStreamEvent]:
         """
         Yields a partial message as it is generated, as well as the usage information.
         """
@@ -157,6 +161,7 @@ class OpenAIChatCompletionsModel(Model):
                 span_generation,
                 tracing,
                 stream=True,
+                prompt=prompt,
             )
 
             final_response: Response | None = None
@@ -179,42 +184,45 @@ class OpenAIChatCompletionsModel(Model):
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[True],
-    ) -> tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
+        prompt: ResponsePromptParam | None = None,
+    ) -> typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]: ...
 
     @overload
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: Literal[False],
+        prompt: ResponsePromptParam | None = None,
     ) -> ChatCompletion: ...
 
     async def _fetch_response(
         self,
         system_instructions: str | None,
-        input: str | list[TResponseInputItem],
+        input: str | typing.List[TResponseInputItem],
         model_settings: ModelSettings,
-        tools: list[Tool],
+        tools: typing.List[Tool],
         output_schema: AgentOutputSchemaBase | None,
-        handoffs: list[Handoff],
+        handoffs: typing.List[Handoff],
         span: Span[GenerationSpanData],
         tracing: ModelTracing,
         stream: bool = False,
-    ) -> ChatCompletion | tuple[Response, AsyncStream[ChatCompletionChunk]]:
+        prompt: ResponsePromptParam | None = None,
+    ) -> ChatCompletion | typing.Tuple[Response, AsyncStream[ChatCompletionChunk]]:
         converted_messages = Converter.items_to_messages(input)
 
         if system_instructions:
@@ -281,6 +289,7 @@ class OpenAIChatCompletionsModel(Model):
             extra_query=model_settings.extra_query,
             extra_body=model_settings.extra_body,
             metadata=self._non_null_or_not_given(model_settings.metadata),
+            **(model_settings.extra_args or {}),
         )
 
         if isinstance(ret, ChatCompletion):
